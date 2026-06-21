@@ -1,13 +1,45 @@
+import { useState } from "react";
 import Header from "@/components/Header";
 import { useApp } from "@/store/useApp";
-import { Plus, Sparkles, ShoppingBasket } from "lucide-react";
+import { Plus, Sparkles, ShoppingBasket, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-const missingIngredients = ["Ägg", "Kryddor"];
+const recipes = [
+  {
+    title: "Krämig Omelett med krutonger",
+    desc: "Snabb, mättande och räddar två varor.",
+    emoji: "🍳",
+    time: "15 min",
+    rating: "4.8",
+    gradient: "from-amber-200 via-orange-300 to-amber-400",
+    missing: ["Ägg", "Kryddor"],
+  },
+  {
+    title: "Fattiga Riddare",
+    desc: "Klassisk svensk efterrätt — pannkaksdoftande och gyllene.",
+    emoji: "🥞",
+    time: "10 min",
+    rating: "4.9",
+    gradient: "from-yellow-200 via-amber-300 to-orange-400",
+    missing: ["Ägg", "Kanel", "Socker"],
+  },
+  {
+    title: "Varma Mackor med ost",
+    desc: "Rostat bröd, smält ost och en skvätt mjölk i smeten.",
+    emoji: "🥪",
+    time: "8 min",
+    rating: "4.6",
+    gradient: "from-orange-200 via-amber-300 to-yellow-400",
+    missing: ["Ost", "Smör"],
+  },
+];
 
 const Planering = () => {
   const shoppingList = useApp((s) => s.shoppingList);
   const addShopping = useApp((s) => s.addShopping);
+  const [recipeIdx, setRecipeIdx] = useState(0);
+  const recipe = recipes[recipeIdx];
+
 
   return (
     <div className="pb-28">
@@ -19,23 +51,36 @@ const Planering = () => {
           Standardval: Veckans Räddare
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-3xl bg-card card-shadow animate-slide-up">
-          <div className="relative h-44 bg-gradient-to-br from-amber-200 via-orange-300 to-amber-400">
+        <div
+          key={recipeIdx}
+          className="mt-3 overflow-hidden rounded-3xl bg-card card-shadow animate-slide-up"
+        >
+          <div className={`relative h-44 bg-gradient-to-br ${recipe.gradient}`}>
             <div className="absolute inset-0 flex items-center justify-center text-7xl">
-              🍳
+              {recipe.emoji}
             </div>
             <div className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-foreground backdrop-blur-sm">
-              ⏱ 15 min · ⭐ 4.8
+              ⏱ {recipe.time} · ⭐ {recipe.rating}
             </div>
           </div>
 
           <div className="p-5">
-            <h2 className="text-xl font-bold leading-tight">
-              Krämig Omelett med krutonger
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Snabb, mättande och räddar två varor.
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-xl font-bold leading-tight">{recipe.title}</h2>
+              <button
+                onClick={() => {
+                  setRecipeIdx((i) => (i + 1) % recipes.length);
+                  toast("Nytt recept slumpat", {
+                    description: "Hittade ett alternativ till dig.",
+                  });
+                }}
+                aria-label="Slumpa nytt recept"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground active:scale-90 transition-transform"
+              >
+                <RefreshCw className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{recipe.desc}</p>
 
             <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Räddar från kylen
@@ -53,9 +98,9 @@ const Planering = () => {
 
         <button
           onClick={() => {
-            addShopping(missingIngredients);
+            addShopping(recipe.missing);
             toast.success("Tillagt i inköpslistan", {
-              description: "Ägg & Kryddor är redo att handlas.",
+              description: `${recipe.missing.join(" & ")} är redo att handlas.`,
             });
           }}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-[15px] font-semibold text-primary-foreground active:scale-[0.98] transition-transform btn-glow"
