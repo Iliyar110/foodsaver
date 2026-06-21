@@ -1,6 +1,8 @@
+import { useState } from "react";
 import Header from "@/components/Header";
+import ScanModal from "@/components/ScanModal";
 import { useApp } from "@/store/useApp";
-import { AlertTriangle, Check, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Trash2, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 
 const expiryLabel = (d: number) =>
@@ -10,6 +12,7 @@ const Hem = () => {
   const fridge = useApp((s) => s.fridge);
   const consume = useApp((s) => s.consume);
   const trash = useApp((s) => s.trash);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const expiringToday = fridge.filter((i) => i.daysToExpiry <= 1).length;
 
@@ -91,6 +94,17 @@ const Hem = () => {
           ))}
         </div>
       </div>
+
+      {/* Floating scan button */}
+      <button
+        onClick={() => setScanOpen(true)}
+        className="absolute bottom-24 right-5 z-40 flex items-center gap-2 rounded-full bg-primary pl-4 pr-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(16,185,129,0.45)] active:scale-95 transition-transform"
+      >
+        <ScanLine className="h-5 w-5" strokeWidth={2.5} />
+        Skanna vara
+      </button>
+
+      {scanOpen && <ScanModal onClose={() => setScanOpen(false)} />}
     </div>
   );
 };

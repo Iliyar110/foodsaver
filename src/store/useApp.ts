@@ -20,6 +20,7 @@ type State = {
   consume: (id: string) => void;
   trash: (id: string) => void;
   addShopping: (items: string[]) => void;
+  addItem: (item: FridgeItem) => void;
 };
 
 export const useApp = create<State>((set) => ({
@@ -45,5 +46,11 @@ export const useApp = create<State>((set) => ({
   addShopping: (items) =>
     set((s) => ({
       shoppingList: Array.from(new Set([...s.shoppingList, ...items])),
+    })),
+  addItem: (item) =>
+    set((s) => ({
+      fridge: s.fridge.some((i) => i.id === item.id)
+        ? s.fridge
+        : [...s.fridge, item],
     })),
 }));
