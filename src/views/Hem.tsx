@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import ScanModal from "@/components/ScanModal";
 import { useApp } from "@/store/useApp";
@@ -9,10 +9,31 @@ const expiryLabel = (d: number) =>
   d <= 0 ? "Idag" : d === 1 ? "Idag" : `Om ${d - 1} dagar`;
 
 const Hem = () => {
-  const fridge = useApp((s) => s.fridge);
+  // Vi behåller knapp-funktionerna från Lovable
   const consume = useApp((s) => s.consume);
   const trash = useApp((s) => s.trash);
   const [scanOpen, setScanOpen] = useState(false);
+
+  // NYTT: Istället för att hämta låtsas-mat, skapar vi en tom lista för vår riktiga databas
+  const [fridge, setFridge] = useState<any[]>([]);
+
+  // NYTT: Vi hämtar maten från FastAPI när skärmen laddas
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/fridge')
+      .then(response => response.json())
+      .then(data => {
+        // Vi mappar om datan så den passar din fina Lovable-design
+        const formattedData = data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          category: item.category || "Okänd",
+          daysToExpiry: item.expires_in || 3, // Om er db använder expires_in
+          icon: item.icon || "🍎", // Standardikon om databasen saknar det
+        }));
+        setFridge(formattedData);
+      })
+      .catch(err => console.error("Fel vid hämtning från databasen:", err));
+  }, []);
 
   const expiringToday = fridge.filter((i) => i.daysToExpiry <= 1).length;
 

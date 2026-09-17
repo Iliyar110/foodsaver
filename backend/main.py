@@ -1,26 +1,42 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import sqlite3
 
 app = FastAPI()
 
 # Detta tillåter din React-app att prata med din Python-server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # I en riktig app begränsar man detta, men bra för utveckling
+    # I en riktig app begränsar man detta, men bra för utveckling
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Hjälpfunktion för att koppla till databasen
+
+
+def get_db_connection():
+    conn = sqlite3.connect('foodsaver.db')
+    # Gör att vi får ut datan i ett snyggt format (JSON-liknande)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
 @app.get("/")
 def read_root():
     return {"message": "Hej från FoodSaver-servern!"}
 
+
 @app.get("/api/fridge")
 def get_fridge_items():
-    # Detta är tillfällig data (mock data) innan vi kopplar på den riktiga databasen
-    return [
-        {"id": 1, "name": "Mellanmjölk", "category": "Mejeri", "expires_in": 1},
-        {"id": 2, "name": "Formfranska", "category": "Bröd", "expires_in": 1},
-        {"id": 3, "name": "Äpplen", "category": "Frukt", "expires_in": 5}
-    ]
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # SQL-trick: Hämta food_id men kalla den 'id', hämta food_name men kalla den 'name'
+    cursor.execute("SELECT food_id AS id, food_name AS name, category, expiry_date AS expires_in FROM food")
+    food_items = cursor.fetchall()
+
+    conn.close()
+    return food_items
