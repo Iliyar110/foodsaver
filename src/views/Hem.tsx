@@ -13,6 +13,7 @@ const Hem = () => {
   const consume = useApp((s) => s.consume);
   const trash = useApp((s) => s.trash);
   const [scanOpen, setScanOpen] = useState(false);
+  const [foodName, setFoodName] = useState("");
 
   // NYTT: Istället för att hämta låtsas-mat, skapar vi en tom lista för vår riktiga databas
   const [fridge, setFridge] = useState<any[]>([]);
@@ -34,6 +35,50 @@ const Hem = () => {
       })
       .catch(err => console.error("Fel vid hämtning från databasen:", err));
   }, []);
+
+    const handleAddFood = async () => {
+    if (!foodName.trim()) {
+      toast.error("Skriv in en matvara först");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/fridge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          food_name: foodName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Kunde inte spara matvaran");
+      }
+
+      toast.success("Matvaran sparades!");
+      setFoodName("");
+
+      const fridgeResponse = await fetch(
+        "http://127.0.0.1:8000/api/fridge"
+      );
+      const fridgeData = await fridgeResponse.json();
+
+      const formattedData = fridgeData.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        category: item.category || "Okänd",
+        daysToExpiry: item.expires_in || 3,
+        icon: item.icon || "🍎",
+      }));
+
+      setFridge(formattedData);
+    } catch (error) {
+      console.error("Fel vid sparning:", error);
+      toast.error("Kunde inte spara matvaran");
+    }
+  };
 
   // NYTT: Funktion för att radera från databasen och skärmen
   const handleDeleteFood = async (id: number) => {
@@ -58,6 +103,22 @@ const Hem = () => {
       <Header title="Min Kyl" />
 
       <div className="px-5 pt-4">
+        <div className="mb-5 flex gap-2">
+  <input
+    type="text"
+    value={foodName}
+    onChange={(e) => setFoodName(e.target.value)}
+    placeholder="Skriv in en matvara"
+    className="flex-1 rounded-xl border bg-card px-4 py-3 text-sm"
+  />
+
+  <button
+    onClick={handleAddFood}
+    className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+  >
+    Spara
+  </button>
+</div>
         {expiringToday > 0 && (
           <div className="flex items-center gap-3 rounded-2xl bg-warning-bg px-4 py-3 animate-slide-up">
             <AlertTriangle className="h-5 w-5 shrink-0 text-warning" strokeWidth={2.5} />

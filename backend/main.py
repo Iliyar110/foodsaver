@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import sqlite3
 
 app = FastAPI()
@@ -23,6 +24,9 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+class Food(BaseModel):
+    food_name: str
+
 
 @app.get("/")
 def read_root():
@@ -40,6 +44,21 @@ def get_fridge_items():
 
     conn.close()
     return food_items
+
+@app.post("/api/fridge")
+def add_food(food: Food):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO food (food_name) VALUES (?)",
+        (food.food_name,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Matvaran sparades!"}
 
 @app.delete("/api/fridge/{item_id}")
 def delete_food(item_id: int):
