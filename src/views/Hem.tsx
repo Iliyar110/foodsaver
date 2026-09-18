@@ -35,6 +35,22 @@ const Hem = () => {
       .catch(err => console.error("Fel vid hämtning från databasen:", err));
   }, []);
 
+  // NYTT: Funktion för att radera från databasen och skärmen
+  const handleDeleteFood = async (id: number) => {
+    try {
+      // 1. Säg åt backend att radera varan
+      await fetch(`http://127.0.0.1:8000/api/fridge/${id}`, {
+        method: "DELETE",
+      });
+      
+      // 2. Uppdatera React-listan direkt (ta bort varan från skärmen)
+      setFridge((prevFridge) => prevFridge.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Gick inte att radera:", error);
+    }
+  };
+
+
   const expiringToday = fridge.filter((i) => i.daysToExpiry <= 1).length;
 
   return (
@@ -88,7 +104,8 @@ const Hem = () => {
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
                   onClick={() => {
-                    consume(item.id);
+                    handleDeleteFood(item.id); // Radera från DB
+                    consume(item.id); // Er befintliga poängfunktion
                     toast.success("Bra jobbat! +50 poäng", {
                       description: `${item.name} markerad som uppäten.`,
                     });
@@ -100,7 +117,8 @@ const Hem = () => {
                 </button>
                 <button
                   onClick={() => {
-                    trash(item.id);
+                    handleDeleteFood(item.id); // Radera från DB
+                    trash(item.id); // Er befintliga poängfunktion
                     toast(`${item.name} kastad`, {
                       description: "Försök rädda den nästa gång.",
                     });
