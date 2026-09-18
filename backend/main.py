@@ -85,3 +85,21 @@ def get_user(user_id: int):
     
     conn.close()
     return user
+
+@app.put("/api/user/{user_id}/add_points")
+def add_points(user_id: int, points: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # 1. Hämta användarens nuvarande poäng
+    cursor.execute("SELECT total_points FROM user WHERE user_id = ?", (user_id,))
+    user = cursor.fetchone()
+    
+    if user:
+        # 2. Räkna ut den nya summan och uppdatera databasen
+        new_total = user['total_points'] + points
+        cursor.execute("UPDATE user SET total_points = ? WHERE user_id = ?", (new_total, user_id))
+        conn.commit()
+    
+    conn.close()
+    return {"message": "Poäng uppdaterade!"}
