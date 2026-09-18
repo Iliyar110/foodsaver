@@ -1,14 +1,30 @@
 import Header from "@/components/Header";
-import { useApp } from "@/store/useApp";
 import { Flame, Trophy } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const Poang = () => {
-  const score = useApp((s) => s.score);
-  const streak = useApp((s) => s.streak);
+  // Nytt: Lokala states för databasens värden
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [userName, setUserName] = useState("");
+
+  // Nytt: Hämta data från Python när sidan laddas
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/user/1') // Vi hämtar användare #1 (dig själv)
+      .then(response => response.json())
+      .then(data => {
+        if(data) {
+          setScore(data.total_points);
+          setStreak(data.mat_streak);
+          setUserName(data.username);
+        }
+      })
+      .catch(error => console.error("Kunde inte hämta användare:", error));
+  }, []);
 
   const leaderboard = [
     { name: "Anna", points: 1400 },
-    { name: "DU", points: score, you: true },
+    { name: userName || "DU", points: score, you: true },
     { name: "Marcus", points: 1100 },
     { name: "Elin", points: 950 },
   ].sort((a, b) => b.points - a.points);
