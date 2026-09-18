@@ -73,3 +73,15 @@ def delete_food(item_id: int):
     conn.close()
     
     return {"message": f"Vara {item_id} är raderad"}
+
+@app.get("/api/user/{user_id}")
+def get_user(user_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Hämtar poäng och streak för användaren
+    cursor.execute("SELECT total_points, mat_streak, username FROM user WHERE user_id = ?", (user_id,))
+    user = cursor.fetchone()
+    
+    conn.close()
+    return user
