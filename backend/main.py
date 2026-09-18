@@ -40,3 +40,17 @@ def get_fridge_items():
 
     conn.close()
     return food_items
+
+@app.delete("/api/fridge/{item_id}")
+def delete_food(item_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Radera varan från databasen där ID matchar
+    cursor.execute("DELETE FROM food WHERE food_id = ?", (item_id,))
+    
+    # Glöm inte commit när du ändrar i databasen (DELETE/INSERT/UPDATE)
+    conn.commit()
+    conn.close()
+    
+    return {"message": f"Vara {item_id} är raderad"}
