@@ -97,12 +97,36 @@ const Planering = () => {
         </div>
 
         <button
-          onClick={() => {
-            addShopping(recipe.missing);
-            toast.success("Tillagt i inköpslistan", {
-              description: `${recipe.missing.join(" & ")} är redo att handlas.`,
-            });
-          }}
+  onClick={async () => {
+     try {
+        for (const ingredient of recipe.missing) {
+      const response = await fetch("http://127.0.0.1:8000/api/shopping-list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          item_name: ingredient,
+          quantity: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Kunde inte lägga till ingrediens");
+      }
+    }
+
+    addShopping(recipe.missing);
+
+    toast.success("Tillagt i inköpslistan", {
+      description: `${recipe.missing.join(" & ")} är redo att handlas.`,
+    });
+  } catch (error) {
+    toast.error("Något gick fel", {
+      description: "Kunde inte spara ingredienserna i databasen.",
+    });
+  }
+}}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-[15px] font-semibold text-primary-foreground active:scale-[0.98] transition-transform btn-glow"
         >
           <Plus className="h-5 w-5" strokeWidth={3} />

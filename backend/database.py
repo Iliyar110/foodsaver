@@ -33,7 +33,17 @@ def create_tables():
         FOREIGN KEY(user_id) REFERENCES user(user_id)
     )
     ''')
-
+    # 4. Skapa tabellen för Inköpslista (SHOPPING_LIST)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS shopping_list (
+        shopping_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        item_name TEXT NOT NULL,
+        quantity INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES user(user_id)
+    )
+    ''')
     # Spara ändringarna och stäng kopplingen
     conn.commit()
     conn.close()
