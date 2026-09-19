@@ -95,6 +95,17 @@ const Hem = () => {
     }
   };
 
+  // NYTT: Funktion för att lägga till poäng i databasen
+  const handleAddPoints = async (points: number) => {
+    try {
+      await fetch(`http://127.0.0.1:8000/api/user/1/add_points?points=${points}`, {
+        method: "PUT",
+      });
+    } catch (error) {
+      console.error("Gick inte att uppdatera poäng:", error);
+    }
+  };
+
 
   const expiringToday = fridge.filter((i) => i.daysToExpiry <= 1).length;
 
@@ -166,6 +177,7 @@ const Hem = () => {
                 <button
                   onClick={() => {
                     handleDeleteFood(item.id); // Radera från DB
+                    handleAddPoints(50); // <-- NYTT: Ger 50 poäng till databasen
                     consume(item.id); // Er befintliga poängfunktion
                     toast.success("Bra jobbat! +50 poäng", {
                       description: `${item.name} markerad som uppäten.`,
