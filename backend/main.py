@@ -162,3 +162,57 @@ def add_points(user_id: int, points: int):
     conn.close()
 
     return {"message": "Poäng uppdaterade!"}
+
+# Radera vara från inköpslistan när man checkar av den
+@app.delete("/api/shopping-list/{item_id}")
+def delete_shopping_item(item_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM shopping_list WHERE shopping_id = ?",
+        (item_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Vara borttagen från inköpslistan"}
+
+@app.get("/api/recommendations")
+def get_recommendations():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # 1. Hämta all mat användaren har i kylen
+    cursor.execute("SELECT food_name FROM food")
+    fridge_items = [row['food_name'].lower() for row in cursor.fetchall()]
+    
+    # 2. Hämta alla recept
+    cursor.execute("SELECT * FROM recipe")
+    all_recipes = cursor.fetchall()
+    
+    ranked_recipes = []
+    
+    # 3. Jämför kylen mot varje recept
+    for recipe in all_recipes:
+        recipe_id = recipe['recipe_id']
+        
+        cursor.execute("SELECT ingredient_name FROM recipe_ingredient WHERE recipe_id = ?", (recipe_id,))
+        required_ingredients = [row['ingredient_name'] for row in cursor.fetchall()]
+        
+        # Räkna ut vilka som saknas
+        missing = [req for req in required_ingredients if req.lower() not in fridge_items]
+            
+        # Gör om till ett lexikon (dict) och spara hur många som saknas
+        recipe_dict = dict(recipe)
+        recipe_dict['missing'] = missing
+        recipe_dict['missing_count'] = len(missing)
+        ranked_recipes.append(recipe_dict)
+            
+    conn.close()
+    
+    # 4. Sortera listan så att receptet med minst saknade varor hamnar först!
+    ranked_recipes.sort(key=lambda x: x['missing_count'])
+    
+    return ranked_recipes

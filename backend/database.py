@@ -1,6 +1,5 @@
 import sqlite3
 
-
 def create_tables():
     # 1. Skapa (eller öppna) databasfilen
     conn = sqlite3.connect('foodsaver.db')
@@ -33,6 +32,7 @@ def create_tables():
         FOREIGN KEY(user_id) REFERENCES user(user_id)
     )
     ''')
+    
     # 4. Skapa tabellen för Inköpslista (SHOPPING_LIST)
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS shopping_list (
@@ -44,11 +44,34 @@ def create_tables():
         FOREIGN KEY(user_id) REFERENCES user(user_id)
     )
     ''')
+
+    # 5. Skapa tabellen för Recept (RECIPE)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS recipe (
+        recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        emoji TEXT,
+        time TEXT,
+        rating TEXT,
+        gradient TEXT
+    )
+    ''')
+
+    # 6. Skapa tabellen för Receptets ingredienser (RECIPE_INGREDIENT)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS recipe_ingredient (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id INTEGER,
+        ingredient_name TEXT NOT NULL,
+        FOREIGN KEY(recipe_id) REFERENCES recipe(recipe_id)
+    )
+    ''')
+
     # Spara ändringarna och stäng kopplingen
     conn.commit()
     conn.close()
     print("Succé! Databasen och tabellerna är nu skapade.")
-
 
 # Det här gör att koden körs när vi startar filen
 if __name__ == "__main__":
