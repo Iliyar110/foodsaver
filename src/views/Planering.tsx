@@ -28,12 +28,31 @@ const Planering = () => {
       .catch(err => console.error("Fel vid hämtning av inköpslista:", err));
   };
 
-  const handleCheckItem = async (id: number) => {
+  // NYTT: Tar nu emot både id och namnet på varan
+  const handleCheckItem = async (id: number, name: string) => {
     try {
-      await fetch(`http://127.0.0.1:8000/api/shopping-list/${id}`, { method: "DELETE" });
+      // 1. Skicka varan till kylen först (använder er befintliga POST för mat)
+      await fetch("http://127.0.0.1:8000/api/fridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ food_name: name }),
+      });
+
+      // 2. Radera den sedan från inköpslistan
+      await fetch(`http://127.0.0.1:8000/api/shopping-list/${id}`, { 
+        method: "DELETE" 
+      });
+      
+      // 3. Hämta den uppdaterade listan så varan försvinner från skärmen
       fetchShoppingList();
+      
+      // 4. Ge snygg feedback!
+      toast.success(`${name} inlagd i kylen!`, {
+        description: "Bra jobbat med inköpen.",
+      });
+
     } catch (error) {
-      console.error("Kunde inte checka av varan:", error);
+      console.error("Kunde inte flytta varan till kylen:", error);
     }
   };
 
@@ -158,7 +177,7 @@ const Planering = () => {
                 {shoppingList.map((item) => (
                   <li
                     key={item.id}
-                    onClick={() => handleCheckItem(item.id)}
+                    onClick={() => handleCheckItem(item.id, item.item_name)}
                     className="flex cursor-pointer items-center gap-3 px-5 py-3.5 hover:bg-secondary/50 animate-scale-in"
                   >
                     <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/40 transition-colors hover:border-primary" />
