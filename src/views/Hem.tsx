@@ -18,25 +18,45 @@ const Hem = () => {
   // NYTT: Istället för att hämta låtsas-mat, skapar vi en tom lista för vår riktiga databas
   const [fridge, setFridge] = useState<any[]>([]);
 
-  // NYTT: Vi hämtar maten från FastAPI när skärmen laddas
+  // NYTT: Användarens inställning för hur många dagar innan utgång
+  // en vara ska få "SNART"-etiketten
+  const [warningDays, setWarningDays] = useState(3);
+
+  // NYTT: Vi hämtar maten och användarens inställning från FastAPI
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/fridge')
-      .then(response => response.json())
-      .then(data => {
+    // Hämta matvaror från kylen
+    fetch("http://127.0.0.1:8000/api/fridge")
+      .then((response) => response.json())
+      .then((data) => {
         // Vi mappar om datan så den passar din fina Lovable-design
         const formattedData = data.map((item: any) => ({
           id: item.id,
           name: item.name,
           category: item.category || "Okänd",
-          daysToExpiry: item.expires_in || 3, // Om er db använder expires_in
-          icon: item.icon || "🍎", // Standardikon om databasen saknar det
+          daysToExpiry: item.expires_in || 3,
+          icon: item.icon || "🍎",
         }));
+
         setFridge(formattedData);
       })
-      .catch(err => console.error("Fel vid hämtning från databasen:", err));
+      .catch((err) =>
+        console.error("Fel vid hämtning från databasen:", err)
+      );
+
+    // Hämta användarens inställning för varningsdagar
+    fetch("http://127.0.0.1:8000/api/user/1")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.warning_days !== undefined) {
+          setWarningDays(data.warning_days);
+        }
+      })
+      .catch((err) =>
+        console.error("Fel vid hämtning av varningsdagar:", err)
+      );
   }, []);
 
-    const handleAddFood = async () => {
+  const handleAddFood = async () => {
     if (!foodName.trim()) {
       toast.error("Skriv in en matvara först");
       return;
@@ -87,9 +107,11 @@ const Hem = () => {
       await fetch(`http://127.0.0.1:8000/api/fridge/${id}`, {
         method: "DELETE",
       });
-      
-      // 2. Uppdatera React-listan direkt (ta bort varan från skärmen)
-      setFridge((prevFridge) => prevFridge.filter((item) => item.id !== id));
+
+      // 2. Uppdatera React-listan direkt
+      setFridge((prevFridge) =>
+        prevFridge.filter((item) => item.id !== id)
+      );
     } catch (error) {
       console.error("Gick inte att radera:", error);
     }
@@ -98,16 +120,21 @@ const Hem = () => {
   // NYTT: Funktion för att lägga till poäng i databasen
   const handleAddPoints = async (points: number) => {
     try {
-      await fetch(`http://127.0.0.1:8000/api/user/1/add_points?points=${points}`, {
-        method: "PUT",
-      });
+      await fetch(
+        `http://127.0.0.1:8000/api/user/1/add_points?points=${points}`,
+        {
+          method: "PUT",
+        }
+      );
     } catch (error) {
       console.error("Gick inte att uppdatera poäng:", error);
     }
   };
 
-
-  const expiringToday = fridge.filter((i) => i.daysToExpiry <= 1).length;
+  // Den här varningen gäller fortfarande endast varor som går ut idag
+  const expiringToday = fridge.filter(
+    (i) => i.daysToExpiry <= 1
+  ).length;
 
   return (
     <div className="pb-28">
@@ -115,24 +142,28 @@ const Hem = () => {
 
       <div className="px-5 pt-4">
         <div className="mb-5 flex gap-2">
-  <input
-    type="text"
-    value={foodName}
-    onChange={(e) => setFoodName(e.target.value)}
-    placeholder="Skriv in en matvara"
-    className="flex-1 rounded-xl border bg-card px-4 py-3 text-sm"
-  />
+          <input
+            type="text"
+            value={foodName}
+            onChange={(e) => setFoodName(e.target.value)}
+            placeholder="Skriv in en matvara"
+            className="flex-1 rounded-xl border bg-card px-4 py-3 text-sm"
+          />
 
-  <button
-    onClick={handleAddFood}
-    className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
-  >
-    Spara
-  </button>
-</div>
+          <button
+            onClick={handleAddFood}
+            className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+          >
+            Spara
+          </button>
+        </div>
+
         {expiringToday > 0 && (
           <div className="flex items-center gap-3 rounded-2xl bg-warning-bg px-4 py-3 animate-slide-up">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-warning" strokeWidth={2.5} />
+            <AlertTriangle
+              className="h-5 w-5 shrink-0 text-warning"
+              strokeWidth={2.5}
+            />
             <p className="text-sm font-semibold text-foreground">
               {expiringToday} varor går ut idag!
             </p>
@@ -158,15 +189,20 @@ const Hem = () => {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-2xl">
                   {item.icon}
                 </div>
+
                 <div className="flex-1">
                   <p className="text-base font-semibold leading-tight">
                     {item.name}
                   </p>
+
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {item.category} · Går ut: {expiryLabel(item.daysToExpiry)}
+                    {item.category} · Går ut:{" "}
+                    {expiryLabel(item.daysToExpiry)}
                   </p>
                 </div>
-                {item.daysToExpiry <= 1 && (
+
+                {/* SNART visas enligt användarens warning_days-inställning */}
+                {item.daysToExpiry <= warningDays && (
                   <span className="rounded-full bg-warning-bg px-2 py-0.5 text-[10px] font-semibold text-warning">
                     SNART
                   </span>
@@ -176,9 +212,10 @@ const Hem = () => {
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
                   onClick={() => {
-                    handleDeleteFood(item.id); // Radera från DB
-                    handleAddPoints(50); // <-- NYTT: Ger 50 poäng till databasen
-                    consume(item.id); // Er befintliga poängfunktion
+                    handleDeleteFood(item.id);
+                    handleAddPoints(50);
+                    consume(item.id);
+
                     toast.success("Bra jobbat! +50 poäng", {
                       description: `${item.name} markerad som uppäten.`,
                     });
@@ -188,10 +225,12 @@ const Hem = () => {
                   <Check className="h-4 w-4" strokeWidth={3} />
                   Ätit upp
                 </button>
+
                 <button
                   onClick={() => {
-                    handleDeleteFood(item.id); // Radera från DB
-                    trash(item.id); // Er befintliga poängfunktion
+                    handleDeleteFood(item.id);
+                    trash(item.id);
+
                     toast(`${item.name} kastad`, {
                       description: "Försök rädda den nästa gång.",
                     });

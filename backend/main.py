@@ -126,13 +126,29 @@ def get_user(user_id: int):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT total_points, mat_streak, username FROM user WHERE user_id = ?",
+        "SELECT total_points, mat_streak, username, warning_days FROM user WHERE user_id = ?",
         (user_id,)
     )
     user = cursor.fetchone()
 
     conn.close()
     return user
+
+# Spara användarens val av warning_days
+@app.put("/api/user/{user_id}/warning-days")
+def update_warning_days(user_id: int, warning_days: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE user SET warning_days = ? WHERE user_id = ?",
+        (warning_days, user_id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Varningsdagar uppdaterade!"}
 
 
 # Lägg till poäng

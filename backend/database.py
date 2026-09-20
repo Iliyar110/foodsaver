@@ -14,6 +14,7 @@ def create_tables():
         password_hash TEXT NOT NULL,
         total_points INTEGER DEFAULT 1250,
         mat_streak INTEGER DEFAULT 5,
+        warning_days INTEGER DEFAULT 3,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
