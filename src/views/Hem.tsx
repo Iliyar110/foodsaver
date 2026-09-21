@@ -246,16 +246,16 @@ const Hem = () => {
         </div>
       </div>
 
-      {/* Floating scan button */}
-      <button
-        onClick={() => setScanOpen(true)}
-        className="absolute bottom-24 right-5 z-40 flex items-center gap-2 rounded-full bg-primary pl-4 pr-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(16,185,129,0.45)] active:scale-95 transition-transform"
-      >
-        <ScanLine className="h-5 w-5" strokeWidth={2.5} />
-        Skanna vara
-      </button>
-
-      {scanOpen && <ScanModal onClose={() => setScanOpen(false)} />}
+      {/* Floating scan button (Sticky låser fast den inuti appens ram) */}
+      <div className="sticky bottom-24 mt-4 flex justify-end px-5 pointer-events-none z-40">
+        <button
+          onClick={() => setScanOpen(true)}
+          className="pointer-events-auto flex items-center gap-2 rounded-full bg-primary pl-4 pr-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(16,185,129,0.45)] active:scale-95 transition-transform"
+        >
+          <ScanLine className="h-5 w-5" strokeWidth={2.5} />
+          Skanna vara
+        </button>
+      </div>
     </div>
   );
 };
