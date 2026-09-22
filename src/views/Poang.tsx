@@ -3,14 +3,18 @@ import { Flame, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Poang = () => {
-  // Nytt: Lokala states för databasens värden
+  // Lokala states för databasens värden
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [userName, setUserName] = useState("");
+  
+  // NYTT: State för hela den dynamiska topplistan
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-  // Nytt: Hämta data från Python när sidan laddas
+  // Hämta data från Python när sidan laddas
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/user/1') // Vi hämtar användare #1 (dig själv)
+    // 1. Hämta data för dig själv (user #1)
+    fetch('http://127.0.0.1:8000/api/user/1')
       .then(response => response.json())
       .then(data => {
         if(data) {
@@ -20,14 +24,13 @@ const Poang = () => {
         }
       })
       .catch(error => console.error("Kunde inte hämta användare:", error));
-  }, []);
 
-  const leaderboard = [
-    { name: "Anna", points: 1400 },
-    { name: userName || "DU", points: score, you: true },
-    { name: "Marcus", points: 1100 },
-    { name: "Elin", points: 950 },
-  ].sort((a, b) => b.points - a.points);
+    // 2. NYTT: Hämta hela topplistan från databasen
+    fetch('http://127.0.0.1:8000/api/leaderboard')
+      .then(res => res.json())
+      .then(data => setLeaderboard(data))
+      .catch(err => console.error("Kunde inte hämta topplistan:", err));
+  }, []);
 
   return (
     <div className="pb-28">
@@ -78,40 +81,45 @@ const Poang = () => {
             Topplista — Vänner
           </h2>
           <div className="mt-3 overflow-hidden rounded-2xl bg-card card-shadow">
-            {leaderboard.map((row, i) => (
-              <div
-                key={row.name}
-                className={`flex items-center gap-4 border-b border-border last:border-b-0 px-4 py-3.5 ${
-                  row.you ? "bg-accent" : ""
-                }`}
-              >
-                <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                    i === 0
-                      ? "bg-yellow-100 text-yellow-700"
-                      : row.you
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
+            {leaderboard.map((person, i) => {
+              // Kolla om detta är du (användare 1) för att markera raden
+              const isYou = person.user_id === 1;
+
+              return (
+                <div
+                  key={person.user_id}
+                  className={`flex items-center gap-4 border-b border-border last:border-b-0 px-4 py-3.5 ${
+                    isYou ? "bg-accent" : ""
                   }`}
                 >
-                  {i + 1}
-                </span>
-                <span
-                  className={`flex-1 text-base font-semibold ${
-                    row.you ? "text-primary" : ""
-                  }`}
-                >
-                  {row.name}
-                </span>
-                <span
-                  className={`text-sm font-bold tabular-nums ${
-                    row.you ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  {row.points.toLocaleString("sv-SE")}p
-                </span>
-              </div>
-            ))}
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                      i === 0
+                        ? "bg-yellow-100 text-yellow-700"
+                        : isYou
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground"
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span
+                    className={`flex-1 text-base font-semibold ${
+                      isYou ? "text-primary" : ""
+                    }`}
+                  >
+                    {isYou ? "DU" : person.username}
+                  </span>
+                  <span
+                    className={`text-sm font-bold tabular-nums ${
+                      isYou ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {person.total_points.toLocaleString("sv-SE")}p
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
       </div>
