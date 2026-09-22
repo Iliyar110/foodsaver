@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,6 +48,7 @@ const Section = ({
     <h2 className="px-5 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
       {title}
     </h2>
+
     <div className="divide-y divide-border rounded-2xl bg-card card-shadow mx-1">
       {children}
     </div>
@@ -61,7 +62,54 @@ const Installningar = () => {
   const [pushNotif, setPushNotif] = useState(true);
   const [showLeaderboard, setShowLeaderboard] = useState(true);
 
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/user/1")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.warning_days !== undefined) {
+          setWarnDays(
+            data.warning_days === 1
+              ? "1 dag"
+              : `${data.warning_days} dagar`
+          );
+        }
+      })
+      .catch((err) =>
+        console.error("Fel vid hämtning av varningsdagar:", err)
+      );
+  }, []);
+
   const options = ["1 dag", "2 dagar", "3 dagar"];
+
+  const handleSave = async () => {
+    const warningDays = parseInt(warnDays);
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/user/1/warning-days?warning_days=${warningDays}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Kunde inte spara inställningarna");
+      }
+
+      toast.success("Inställningar sparade", {
+        description: "Dina val är uppdaterade.",
+      });
+    } catch (error) {
+      console.error("Fel vid sparning av inställningar:", error);
+
+      toast.error("Kunde inte spara inställningarna", {
+        description: "Försök igen.",
+      });
+    }
+  };
 
   return (
     <div className="pb-28">
@@ -79,6 +127,7 @@ const Installningar = () => {
                 <ChevronDown className="h-4 w-4" />
               </button>
             </SettingRow>
+
             {warnOpen && (
               <div className="absolute right-3 top-12 z-20 w-40 overflow-hidden rounded-xl bg-popover shadow-lg ring-1 ring-border animate-scale-in">
                 {options.map((o) => (
@@ -91,6 +140,7 @@ const Installningar = () => {
                     className="flex w-full items-center justify-between px-3 py-2.5 text-sm hover:bg-secondary"
                   >
                     {o}
+
                     {warnDays === o && (
                       <Check className="h-4 w-4 text-primary" />
                     )}
@@ -99,6 +149,7 @@ const Installningar = () => {
               </div>
             )}
           </div>
+
           <SettingRow label="Färgkodning (Grön/Orange)">
             <Toggle on={colorCoding} onChange={setColorCoding} />
           </SettingRow>
@@ -118,11 +169,7 @@ const Installningar = () => {
 
         <div className="px-5 pt-8">
           <button
-            onClick={() =>
-              toast.success("Inställningar sparade", {
-                description: "Dina val är uppdaterade.",
-              })
-            }
+            onClick={handleSave}
             className="w-full rounded-2xl bg-primary py-4 text-[15px] font-semibold text-primary-foreground active:scale-[0.98] transition-transform btn-glow"
           >
             Spara inställningar
