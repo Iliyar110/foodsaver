@@ -232,3 +232,16 @@ def get_recommendations():
     ranked_recipes.sort(key=lambda x: x['missing_count'])
     
     return ranked_recipes
+
+# Hämta topplistan
+@app.get("/api/leaderboard")
+def get_leaderboard():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # ORDER BY total_points DESC sorterar från högsta till lägsta poäng
+    cursor.execute("SELECT user_id, username, total_points FROM user ORDER BY total_points DESC")
+    leaderboard = cursor.fetchall()
+    
+    conn.close()
+    return leaderboard
