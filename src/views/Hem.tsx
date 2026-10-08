@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import ScanModal from "@/components/ScanModal";
 import { useApp } from "@/store/useApp";
-import { AlertTriangle, Check, Trash2, ScanLine } from "lucide-react";
+import { AlertTriangle, Check, Trash2, ScanLine, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 const expiryLabel = (d: number) =>
@@ -14,6 +14,10 @@ const Hem = () => {
   const trash = useApp((s) => s.trash);
   const [scanOpen, setScanOpen] = useState(false);
   const [foodName, setFoodName] = useState("");
+  const [foodDate, setFoodDate] = useState(""); // NYTT STATE FÖR DATUM
+  // Nya states för det manuella inmatningsformuläret
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemDate, setNewItemDate] = useState("");
 
   // NYTT: Istället för att hämta låtsas-mat, skapar vi en tom lista för vår riktiga databas
   const [fridge, setFridge] = useState<any[]>([]);
@@ -56,7 +60,20 @@ const Hem = () => {
       );
   }, []);
 
-  const handleAddFood = async () => {
+  // Räknar ut antal dagar mellan idag och det valda datumet
+  const calculateDaysLeft = (dateString: string) => {
+    if (!dateString) return 3; // Standardvärde om inget datum fyllts i
+    if (!isNaN(Number(dateString))) return Number(dateString); // Om det redan är en siffra
+    
+    const expiryDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = expiryDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const handleAddFood = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault(); // Hindrar sidan från att laddas om ifall den ligger i ett form
+
     if (!foodName.trim()) {
       toast.error("Skriv in en matvara först");
       return;
@@ -70,6 +87,7 @@ const Hem = () => {
         },
         body: JSON.stringify({
           food_name: foodName,
+          expiry_date: foodDate || null, // NYTT: Skickar med datumet om det finns
         }),
       });
 
@@ -77,19 +95,19 @@ const Hem = () => {
         throw new Error("Kunde inte spara matvaran");
       }
 
-      toast.success("Matvaran sparades!");
+      toast.success(`${foodName} inlagd i kylen!`);
       setFoodName("");
+      setFoodDate(""); // NYTT: Tömmer datumväljaren
 
-      const fridgeResponse = await fetch(
-        "http://127.0.0.1:8000/api/fridge"
-      );
+      // Din befintliga, bra logik för att uppdatera listan:
+      const fridgeResponse = await fetch("http://127.0.0.1:8000/api/fridge");
       const fridgeData = await fridgeResponse.json();
 
       const formattedData = fridgeData.map((item: any) => ({
         id: item.id,
         name: item.name,
         category: item.category || "Okänd",
-        daysToExpiry: item.expires_in || 3,
+        daysToExpiry: calculateDaysLeft(item.expires_in), // <-- Använd funktionen här
         icon: item.icon || "🍎",
       }));
 
@@ -141,22 +159,32 @@ const Hem = () => {
       <Header title="Min Kyl" />
 
       <div className="px-5 pt-4">
-        <div className="mb-5 flex gap-2">
-          <input
-            type="text"
+        <form 
+          onSubmit={handleAddFood} 
+          className="mb-6 flex w-full items-center gap-2 rounded-2xl bg-card p-3 card-shadow"
+        >
+          <input 
+            type="text" 
+            placeholder="Vad har du köpt?" 
             value={foodName}
             onChange={(e) => setFoodName(e.target.value)}
-            placeholder="Skriv in en matvara"
-            className="flex-1 rounded-xl border bg-card px-4 py-3 text-sm"
+            className="min-w-0 flex-1 rounded-xl bg-secondary px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50"
           />
-
-          <button
-            onClick={handleAddFood}
-            className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+          <input 
+            type="date" 
+            value={foodDate}
+            onChange={(e) => setFoodDate(e.target.value)}
+            className="w-12 shrink-0 rounded-xl bg-secondary px-2 py-2.5 text-sm text-transparent outline-none focus:ring-2 focus:ring-primary/50 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer sm:w-auto sm:text-foreground"
+            title="Välj bäst före-datum"
+          />
+          <button 
+            type="submit" 
+            disabled={!foodName.trim()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground transition-transform active:scale-90 disabled:opacity-50"
           >
-            Spara
+            <Plus className="h-5 w-5" strokeWidth={3} />
           </button>
-        </div>
+        </form>
 
         {expiringToday > 0 && (
           <div className="flex items-center gap-3 rounded-2xl bg-warning-bg px-4 py-3 animate-slide-up">
@@ -244,17 +272,6 @@ const Hem = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Floating scan button (Sticky låser fast den inuti appens ram) */}
-      <div className="sticky bottom-24 mt-4 flex justify-end px-5 pointer-events-none z-40">
-        <button
-          onClick={() => setScanOpen(true)}
-          className="pointer-events-auto flex items-center gap-2 rounded-full bg-primary pl-4 pr-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(16,185,129,0.45)] active:scale-95 transition-transform"
-        >
-          <ScanLine className="h-5 w-5" strokeWidth={2.5} />
-          Skanna vara
-        </button>
       </div>
     </div>
   );

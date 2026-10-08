@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sqlite3
+from typing import Optional
 
 app = FastAPI()
 
@@ -24,6 +25,7 @@ def get_db_connection():
 
 class Food(BaseModel):
     food_name: str
+    expiry_date: Optional[str] = None  # NYTT: Tillåter att man skickar med ett datum
 
 
 class ShoppingItem(BaseModel):
@@ -92,8 +94,8 @@ def add_food(food: Food):
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO food (food_name) VALUES (?)",
-        (food.food_name,)
+        "INSERT INTO food (food_name, expiry_date) VALUES (?, ?)",
+        (food.food_name, food.expiry_date)
     )
 
     conn.commit()
