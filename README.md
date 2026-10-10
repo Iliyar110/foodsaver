@@ -36,4 +36,4 @@ FoodSaver är en fullstack-applikation byggd för att minska matsvinn genom smar
 
 1. **Klona repot:**
    ```bash
-   git clone [https://github.com/ditt-användarnamn/foodsaver.git](https://github.com/ditt-användarnamn/foodsaver.git)
+   git clone https://github.com/Iliyar110/foodsaver.git
