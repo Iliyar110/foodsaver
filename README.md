@@ -1,6 +1,7 @@
 # 🍏 FoodSaver
 
 FoodSaver är en fullstack-applikation byggd för att minska matsvinn genom smart hantering av kylskåpets innehåll, dynamiska receptrekommendationer och gamification.
+
 <img width="426" height="884" alt="Framsteg 2026-10-09 192628" src="https://github.com/user-attachments/assets/b83b760e-78e2-43c0-8682-da4f7c029e99" />
 
 <img width="424" height="890" alt="MinaVal 2026-10-09 192816" src="https://github.com/user-attachments/assets/eb1fe91f-84de-402d-9d6c-990c32e4b1f6" />
